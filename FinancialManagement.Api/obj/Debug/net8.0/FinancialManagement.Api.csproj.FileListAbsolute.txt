@@ -151,3 +151,4 @@ D:\C#\FinancialManagement.Api\FinancialManagement.Api\obj\Debug\net8.0\Financial
 D:\C#\FinancialManagement.Api\FinancialManagement.Api\obj\Debug\net8.0\FinancialManagement.Api.genruntimeconfig.cache
 D:\C#\FinancialManagement.Api\FinancialManagement.Api\obj\Debug\net8.0\ref\FinancialManagement.Api.dll
 D:\C#\FinancialManagement.Api\FinancialManagement.Api\bin\Debug\net8.0\BCrypt-Net-Next.dll
+D:\C#\FinancialManagement.Api\FinancialManagement.Api\obj\Debug\net8.0\FinancialManagement.Api.sourcelink.json
