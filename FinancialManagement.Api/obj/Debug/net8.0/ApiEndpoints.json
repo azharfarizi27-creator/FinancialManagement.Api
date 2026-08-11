@@ -201,6 +201,53 @@
   },
   {
     "ContainingType": "FinancialManagement.Api.Controllers.DashboardController",
+    "Method": "GetCategorySummary",
+    "RelativePath": "api/Dashboard/category-summary",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "month",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "year",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "type",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FinancialManagement.Api.Controllers.DashboardController",
+    "Method": "GetMonthlySummary",
+    "RelativePath": "api/Dashboard/monthly-summary",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "month",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "year",
+        "Type": "System.Int32",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FinancialManagement.Api.Controllers.DashboardController",
     "Method": "GetRecentTransactions",
     "RelativePath": "api/Dashboard/recent-transactions",
     "HttpMethod": "GET",
@@ -219,6 +266,16 @@
     "ContainingType": "FinancialManagement.Api.Controllers.DashboardController",
     "Method": "GetSummary",
     "RelativePath": "api/Dashboard/summary",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FinancialManagement.Api.Controllers.DashboardController",
+    "Method": "GetWalletSummary",
+    "RelativePath": "api/Dashboard/wallet-summary",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
