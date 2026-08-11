@@ -4,6 +4,7 @@ using FinancialManagement.Api.Repositories.Impl;
 using FinancialManagement.Api.Repositories.Interfaces;
 using FinancialManagement.Api.Services.Impl;
 using FinancialManagement.Api.Services.Interfaces;
+using FinancialManagement.Api.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -105,6 +106,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.UseAuthentication();
 

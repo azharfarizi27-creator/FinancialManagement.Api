@@ -57,6 +57,30 @@ public class BudgetController : ControllerBase
     {
         var userId = GetUserId();
 
+        if (request.LimitAmount <= 0)
+        {
+            return BadRequest(new
+            {
+                message = "LimitAmount harus lebih besar dari 0."
+            });
+        }
+
+        if (request.Month < 1 || request.Month > 12)
+        {
+            return BadRequest(new
+            {
+                message = "Month harus berada di antara 1 dan 12."
+            });
+        }
+
+        if (request.Year < 2000 || request.Year > 2100)
+        {
+            return BadRequest(new
+            {
+                message = "Year harus berada di antara 2000 dan 2100."
+            });
+        }
+
         var budget =
             await _budgetService.CreateAsync(
                 request,
@@ -67,7 +91,7 @@ public class BudgetController : ControllerBase
             return BadRequest(new
             {
                 message =
-                    "Data budget tidak valid, category tidak ditemukan, atau budget untuk periode tersebut sudah ada."
+                    "Category tidak ditemukan atau budget untuk periode tersebut sudah ada."
             });
         }
 
@@ -77,12 +101,37 @@ public class BudgetController : ControllerBase
             budget);
     }
 
+
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(
         int id,
         UpdateBudgetRequest request)
     {
         var userId = GetUserId();
+
+        if (request.LimitAmount <= 0)
+        {
+            return BadRequest(new
+            {
+                message = "LimitAmount harus lebih besar dari 0."
+            });
+        }
+
+        if (request.Month < 1 || request.Month > 12)
+        {
+            return BadRequest(new
+            {
+                message = "Month harus berada di antara 1 dan 12."
+            });
+        }
+
+        if (request.Year < 2000 || request.Year > 2100)
+        {
+            return BadRequest(new
+            {
+                message = "Year harus berada di antara 2000 dan 2100."
+            });
+        }
 
         var budget =
             await _budgetService.UpdateAsync(
@@ -95,12 +144,13 @@ public class BudgetController : ControllerBase
             return BadRequest(new
             {
                 message =
-                    "Data budget tidak valid, category tidak ditemukan, atau budget dengan periode tersebut sudah ada."
+                    "Budget, Category, atau periode budget tidak valid."
             });
         }
 
         return Ok(budget);
     }
+
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)

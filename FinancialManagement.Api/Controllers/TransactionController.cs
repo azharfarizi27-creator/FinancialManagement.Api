@@ -57,6 +57,23 @@ public class TransactionController : ControllerBase
     {
         var userId = GetUserId();
 
+        if (request.Amount <= 0)
+        {
+            return BadRequest(new
+            {
+                message = "Amount harus lebih besar dari 0."
+            });
+        }
+
+        if (request.Type != "Income" &&
+            request.Type != "Expense")
+        {
+            return BadRequest(new
+            {
+                message = "Type harus Income atau Expense."
+            });
+        }
+
         var transaction =
             await _transactionService.CreateAsync(
                 request,
@@ -64,7 +81,7 @@ public class TransactionController : ControllerBase
 
         if (transaction == null)
         {
-            return BadRequest(new
+            return NotFound(new
             {
                 message =
                     "Wallet atau Category tidak ditemukan atau bukan milik user."
@@ -77,12 +94,30 @@ public class TransactionController : ControllerBase
             transaction);
     }
 
+
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(
         int id,
         UpdateTransactionRequest request)
     {
         var userId = GetUserId();
+
+        if (request.Amount <= 0)
+        {
+            return BadRequest(new
+            {
+                message = "Amount harus lebih besar dari 0."
+            });
+        }
+
+        if (request.Type != "Income" &&
+            request.Type != "Expense")
+        {
+            return BadRequest(new
+            {
+                message = "Type harus Income atau Expense."
+            });
+        }
 
         var transaction =
             await _transactionService.UpdateAsync(
@@ -92,7 +127,7 @@ public class TransactionController : ControllerBase
 
         if (transaction == null)
         {
-            return BadRequest(new
+            return NotFound(new
             {
                 message =
                     "Transaction, Wallet, atau Category tidak ditemukan atau bukan milik user."
@@ -101,7 +136,6 @@ public class TransactionController : ControllerBase
 
         return Ok(transaction);
     }
-
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
