@@ -283,6 +283,16 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "FinancialManagement.Api.Controllers.FinancialInsightController",
+    "Method": "GetInsights",
+    "RelativePath": "api/FinancialInsight",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "FinancialManagement.Api.Controllers.TransactionController",
     "Method": "GetAll",
     "RelativePath": "api/Transaction",

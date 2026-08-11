@@ -444,6 +444,18 @@
         }
       }
     },
+    "/api/FinancialInsight": {
+      "get": {
+        "tags": [
+          "FinancialInsight"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/Transaction": {
       "get": {
         "tags": [

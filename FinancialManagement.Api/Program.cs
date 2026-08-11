@@ -62,6 +62,14 @@ builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<IBudgetRepository, BudgetRepository>();
 builder.Services.AddScoped<IBudgetService, BudgetService>();
 
+builder.Services.AddScoped<
+    IFinancialInsightRepository,
+    FinancialInsightRepository>();
+
+builder.Services.AddScoped<
+    IFinancialInsightService,
+    FinancialInsightService>();
+
 // JWT Authentication
 builder.Services.AddAuthentication(
     JwtBearerDefaults.AuthenticationScheme
