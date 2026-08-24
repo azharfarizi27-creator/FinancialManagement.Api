@@ -1,4 +1,3 @@
-﻿using System.Security.Claims;
 using FinancialManagement.Api.DTOs.Transaction;
 using FinancialManagement.Api.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -6,10 +5,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace FinancialManagement.Api.Controllers;
 
-[ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class TransactionController : ControllerBase
+public class TransactionController : BaseApiController
 {
     private readonly ITransactionService _transactionService;
 
@@ -20,12 +18,59 @@ public class TransactionController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll(
+        int page = 1,
+        int pageSize = 10,
+        string? type = null,
+        int? categoryId = null,
+        int? walletId = null,
+        DateTime? startDate = null,
+        DateTime? endDate = null)
     {
         var userId = GetUserId();
 
+        if (page < 1)
+        {
+            return BadRequest(new
+            {
+                message = "Page harus lebih besar dari 0."
+            });
+        }
+
+        if (pageSize < 1 || pageSize > 100)
+        {
+            return BadRequest(new
+            {
+                message = "PageSize harus berada di antara 1 dan 100."
+            });
+        }
+
+        if (!string.IsNullOrEmpty(type) && type != "Income" && type != "Expense")
+        {
+            return BadRequest(new
+            {
+                message = "Type harus Income atau Expense."
+            });
+        }
+
+        if (startDate.HasValue && endDate.HasValue && startDate > endDate)
+        {
+            return BadRequest(new
+            {
+                message = "StartDate tidak boleh lebih besar dari EndDate."
+            });
+        }
+
         var transactions =
-            await _transactionService.GetAllAsync(userId);
+            await _transactionService.GetAllAsync(
+                userId,
+                page,
+                pageSize,
+                type,
+                categoryId,
+                walletId,
+                startDate,
+                endDate);
 
         return Ok(transactions);
     }
@@ -57,23 +102,6 @@ public class TransactionController : ControllerBase
     {
         var userId = GetUserId();
 
-        if (request.Amount <= 0)
-        {
-            return BadRequest(new
-            {
-                message = "Amount harus lebih besar dari 0."
-            });
-        }
-
-        if (request.Type != "Income" &&
-            request.Type != "Expense")
-        {
-            return BadRequest(new
-            {
-                message = "Type harus Income atau Expense."
-            });
-        }
-
         var transaction =
             await _transactionService.CreateAsync(
                 request,
@@ -83,8 +111,7 @@ public class TransactionController : ControllerBase
         {
             return NotFound(new
             {
-                message =
-                    "Wallet atau Category tidak ditemukan atau bukan milik user."
+                message = "Wallet atau Category tidak ditemukan atau bukan milik user."
             });
         }
 
@@ -94,30 +121,12 @@ public class TransactionController : ControllerBase
             transaction);
     }
 
-
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(
         int id,
         UpdateTransactionRequest request)
     {
         var userId = GetUserId();
-
-        if (request.Amount <= 0)
-        {
-            return BadRequest(new
-            {
-                message = "Amount harus lebih besar dari 0."
-            });
-        }
-
-        if (request.Type != "Income" &&
-            request.Type != "Expense")
-        {
-            return BadRequest(new
-            {
-                message = "Type harus Income atau Expense."
-            });
-        }
 
         var transaction =
             await _transactionService.UpdateAsync(
@@ -129,13 +138,13 @@ public class TransactionController : ControllerBase
         {
             return NotFound(new
             {
-                message =
-                    "Transaction, Wallet, atau Category tidak ditemukan atau bukan milik user."
+                message = "Transaction, Wallet, atau Category tidak ditemukan atau bukan milik user."
             });
         }
 
         return Ok(transaction);
     }
+
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
@@ -158,13 +167,5 @@ public class TransactionController : ControllerBase
         {
             message = "Transaction berhasil dihapus."
         });
-    }
-
-    private int GetUserId()
-    {
-        var userId = User.FindFirstValue(
-            ClaimTypes.NameIdentifier);
-
-        return int.Parse(userId!);
     }
 }

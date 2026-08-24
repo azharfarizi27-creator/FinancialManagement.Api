@@ -1,14 +1,12 @@
-﻿using System.Security.Claims;
 using FinancialManagement.Api.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FinancialManagement.Api.Controllers;
 
-[ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class FinancialInsightController : ControllerBase
+public class FinancialInsightController : BaseApiController
 {
     private readonly IFinancialInsightService _service;
 
@@ -27,13 +25,5 @@ public class FinancialInsightController : ControllerBase
             await _service.GetInsightsAsync(userId);
 
         return Ok(insights);
-    }
-
-    private int GetUserId()
-    {
-        var userId = User.FindFirstValue(
-            ClaimTypes.NameIdentifier);
-
-        return int.Parse(userId!);
     }
 }

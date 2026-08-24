@@ -1,4 +1,4 @@
-﻿using FinancialManagement.Api.DTOs.Budget;
+using FinancialManagement.Api.DTOs.Budget;
 using FinancialManagement.Api.Models;
 using FinancialManagement.Api.Repositories.Interfaces;
 using FinancialManagement.Api.Services.Interfaces;
@@ -9,18 +9,25 @@ public class BudgetService : IBudgetService
 {
     private readonly IBudgetRepository _budgetRepository;
     private readonly ICategoryRepository _categoryRepository;
+    private readonly ILogger<BudgetService> _logger;
 
     public BudgetService(
         IBudgetRepository budgetRepository,
-        ICategoryRepository categoryRepository)
+        ICategoryRepository categoryRepository,
+        ILogger<BudgetService> logger)
     {
         _budgetRepository = budgetRepository;
         _categoryRepository = categoryRepository;
+        _logger = logger;
     }
 
     public async Task<List<BudgetResponse>> GetAllAsync(int userId)
     {
+        _logger.LogInformation("Mengambil seluruh anggaran (budgets) untuk UserId: {UserId}", userId);
+
         var budgets = await _budgetRepository.GetByUserIdAsync(userId);
+
+        _logger.LogInformation("Ditemukan {Count} anggaran untuk UserId: {UserId}", budgets.Count, userId);
 
         var responses = new List<BudgetResponse>();
 
@@ -36,12 +43,15 @@ public class BudgetService : IBudgetService
         int id,
         int userId)
     {
+        _logger.LogInformation("Mengambil anggaran Id {BudgetId} untuk UserId: {UserId}", id, userId);
+
         var budget = await _budgetRepository.GetByIdAsync(
             id,
             userId);
 
         if (budget == null)
         {
+            _logger.LogWarning("Anggaran Id {BudgetId} tidak ditemukan untuk UserId: {UserId}", id, userId);
             return null;
         }
 
@@ -52,18 +62,13 @@ public class BudgetService : IBudgetService
         CreateBudgetRequest request,
         int userId)
     {
-        if (request.LimitAmount <= 0)
-        {
-            return null;
-        }
+        _logger.LogInformation(
+            "Membuat anggaran baru: UserId {UserId}, CategoryId {CategoryId}, LimitAmount {LimitAmount}, Month {Month}, Year {Year}",
+            userId, request.CategoryId, request.LimitAmount, request.Month, request.Year);
 
-        if (request.Month < 1 || request.Month > 12)
+        if (request.LimitAmount <= 0 || request.Month < 1 || request.Month > 12 || request.Year < 2000 || request.Year > 2100)
         {
-            return null;
-        }
-
-        if (request.Year < 2000 || request.Year > 2100)
-        {
+            _logger.LogWarning("Gagal membuat anggaran: Parameter input tidak valid");
             return null;
         }
 
@@ -73,6 +78,8 @@ public class BudgetService : IBudgetService
 
         if (category == null)
         {
+            _logger.LogWarning("Gagal membuat anggaran: Kategori Id {CategoryId} tidak ditemukan untuk UserId {UserId}",
+                request.CategoryId, userId);
             return null;
         }
 
@@ -85,6 +92,8 @@ public class BudgetService : IBudgetService
 
         if (existingBudget != null)
         {
+            _logger.LogWarning("Gagal membuat anggaran: Anggaran untuk CategoryId {CategoryId} periode {Month}/{Year} sudah ada",
+                request.CategoryId, request.Month, request.Year);
             return null;
         }
 
@@ -107,8 +116,11 @@ public class BudgetService : IBudgetService
 
         if (createdBudget == null)
         {
+            _logger.LogError("Gagal memuat kembali anggaran yang baru dibuat dengan Id {BudgetId}", budget.Id);
             return null;
         }
+
+        _logger.LogInformation("Anggaran berhasil dibuat dengan Id {BudgetId} untuk UserId: {UserId}", budget.Id, userId);
 
         return await MapToResponse(
             createdBudget,
@@ -120,18 +132,11 @@ public class BudgetService : IBudgetService
         UpdateBudgetRequest request,
         int userId)
     {
-        if (request.LimitAmount <= 0)
-        {
-            return null;
-        }
+        _logger.LogInformation("Memperbarui anggaran Id {BudgetId} untuk UserId: {UserId}", id, userId);
 
-        if (request.Month < 1 || request.Month > 12)
+        if (request.LimitAmount <= 0 || request.Month < 1 || request.Month > 12 || request.Year < 2000 || request.Year > 2100)
         {
-            return null;
-        }
-
-        if (request.Year < 2000 || request.Year > 2100)
-        {
+            _logger.LogWarning("Gagal memperbarui anggaran: Parameter input tidak valid");
             return null;
         }
 
@@ -141,6 +146,7 @@ public class BudgetService : IBudgetService
 
         if (budget == null)
         {
+            _logger.LogWarning("Gagal memperbarui: Anggaran Id {BudgetId} tidak ditemukan untuk UserId: {UserId}", id, userId);
             return null;
         }
 
@@ -150,6 +156,8 @@ public class BudgetService : IBudgetService
 
         if (category == null)
         {
+            _logger.LogWarning("Gagal memperbarui: Kategori Id {CategoryId} tidak ditemukan untuk UserId: {UserId}",
+                request.CategoryId, userId);
             return null;
         }
 
@@ -163,6 +171,7 @@ public class BudgetService : IBudgetService
         if (existingBudget != null &&
             existingBudget.Id != id)
         {
+            _logger.LogWarning("Gagal memperbarui: Konflik periode dengan anggaran Id {ExistingBudgetId}", existingBudget.Id);
             return null;
         }
 
@@ -183,6 +192,8 @@ public class BudgetService : IBudgetService
             return null;
         }
 
+        _logger.LogInformation("Anggaran Id {BudgetId} berhasil diperbarui untuk UserId: {UserId}", id, userId);
+
         return await MapToResponse(
             updatedBudget,
             userId);
@@ -192,16 +203,21 @@ public class BudgetService : IBudgetService
         int id,
         int userId)
     {
+        _logger.LogInformation("Mencoba menghapus anggaran Id {BudgetId} untuk UserId: {UserId}", id, userId);
+
         var budget = await _budgetRepository.GetByIdAsync(
             id,
             userId);
 
         if (budget == null)
         {
+            _logger.LogWarning("Gagal menghapus: Anggaran Id {BudgetId} tidak ditemukan untuk UserId: {UserId}", id, userId);
             return false;
         }
 
         await _budgetRepository.DeleteAsync(budget);
+
+        _logger.LogInformation("Anggaran Id {BudgetId} berhasil dihapus untuk UserId: {UserId}", id, userId);
 
         return true;
     }

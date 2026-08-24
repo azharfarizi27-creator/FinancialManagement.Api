@@ -143,7 +143,6 @@ D:\C#\FinancialManagement.Api\FinancialManagement.Api\obj\Debug\net8.0\staticweb
 D:\C#\FinancialManagement.Api\FinancialManagement.Api\obj\Debug\net8.0\staticwebassets.build.json.cache
 D:\C#\FinancialManagement.Api\FinancialManagement.Api\obj\Debug\net8.0\staticwebassets.development.json
 D:\C#\FinancialManagement.Api\FinancialManagement.Api\obj\Debug\net8.0\staticwebassets.build.endpoints.json
-D:\C#\FinancialManagement.Api\FinancialManagement.Api\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
 D:\C#\FinancialManagement.Api\FinancialManagement.Api\obj\Debug\net8.0\Financia.DAFE3F0C.Up2Date
 D:\C#\FinancialManagement.Api\FinancialManagement.Api\obj\Debug\net8.0\FinancialManagement.Api.dll
 D:\C#\FinancialManagement.Api\FinancialManagement.Api\obj\Debug\net8.0\refint\FinancialManagement.Api.dll
@@ -152,3 +151,5 @@ D:\C#\FinancialManagement.Api\FinancialManagement.Api\obj\Debug\net8.0\Financial
 D:\C#\FinancialManagement.Api\FinancialManagement.Api\obj\Debug\net8.0\ref\FinancialManagement.Api.dll
 D:\C#\FinancialManagement.Api\FinancialManagement.Api\bin\Debug\net8.0\BCrypt-Net-Next.dll
 D:\C#\FinancialManagement.Api\FinancialManagement.Api\obj\Debug\net8.0\FinancialManagement.Api.sourcelink.json
+D:\C#\FinancialManagement.Api\FinancialManagement.Api\bin\Debug\net8.0\FinancialManagement.Api.xml
+D:\C#\FinancialManagement.Api\FinancialManagement.Api\obj\Debug\net8.0\FinancialManagement.Api.xml

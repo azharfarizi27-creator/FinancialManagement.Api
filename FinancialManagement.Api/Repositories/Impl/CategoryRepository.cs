@@ -17,6 +17,7 @@ public class CategoryRepository : ICategoryRepository
     public async Task<List<Category>> GetByUserIdAsync(int userId)
     {
         return await _context.Categories
+            .AsNoTracking()
             .Where(category => category.UserId == userId)
             .ToListAsync();
     }

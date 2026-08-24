@@ -1,15 +1,14 @@
-﻿using FinancialManagement.Api.DTOs.Auth;
-using FinancialManagement.Api.Services;
+using FinancialManagement.Api.DTOs.Auth;
 using FinancialManagement.Api.Services.Interfaces;
-using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Security.Claims;
 
 namespace FinancialManagement.Api.Controllers;
 
-[ApiController]
 [Route("api/[controller]")]
-public class AuthController : ControllerBase
+public class AuthController : BaseApiController
 {
     private readonly IAuthService _authService;
 
@@ -19,25 +18,16 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("register")]
+    [EnableRateLimiting("auth-limit")]
     public async Task<IActionResult> Register(
         RegisterRequest request)
     {
-        try
-        {
-            var result = await _authService.RegisterAsync(request);
-
-            return Ok(result);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new
-            {
-                message = ex.Message
-            });
-        }
+        var result = await _authService.RegisterAsync(request);
+        return Ok(result);
     }
 
     [HttpPost("login")]
+    [EnableRateLimiting("auth-limit")]
     public async Task<IActionResult> Login(
         LoginRequest request)
     {
@@ -58,7 +48,7 @@ public class AuthController : ControllerBase
     [HttpGet("me")]
     public IActionResult Me()
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var userId = GetUserId();
         var fullName = User.FindFirstValue(ClaimTypes.Name);
         var email = User.FindFirstValue(ClaimTypes.Email);
         var role = User.FindFirstValue(ClaimTypes.Role);
@@ -71,6 +61,4 @@ public class AuthController : ControllerBase
             role
         });
     }
-
-
 }

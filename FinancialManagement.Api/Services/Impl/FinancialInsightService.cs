@@ -1,4 +1,4 @@
-﻿using FinancialManagement.Api.DTOs.Dashboard;
+using FinancialManagement.Api.DTOs.Dashboard;
 using FinancialManagement.Api.Repositories.Interfaces;
 using FinancialManagement.Api.Services.Interfaces;
 
@@ -7,27 +7,30 @@ namespace FinancialManagement.Api.Services.Impl;
 public class FinancialInsightService : IFinancialInsightService
 {
     private readonly IFinancialInsightRepository _repository;
+    private readonly ILogger<FinancialInsightService> _logger;
 
     public FinancialInsightService(
-        IFinancialInsightRepository repository)
+        IFinancialInsightRepository repository,
+        ILogger<FinancialInsightService> logger)
     {
         _repository = repository;
+        _logger = logger;
     }
 
     public async Task<List<FinancialInsightResponse>> GetInsightsAsync(
         int userId)
     {
+        _logger.LogInformation("Menganalisis wawasan keuangan (Financial Insights) untuk UserId: {UserId}", userId);
+
         var insights = new List<FinancialInsightResponse>();
 
         var now = DateTime.UtcNow;
-
         var month = now.Month;
         var year = now.Year;
 
         // ==========================================
         // 1. CEK INCOME BULAN INI
         // ==========================================
-
         var currentIncome =
             await _repository.GetCurrentMonthIncomeAsync(
                 userId,
@@ -36,6 +39,7 @@ public class FinancialInsightService : IFinancialInsightService
 
         if (currentIncome == 0)
         {
+            _logger.LogInformation("Insight: Belum ada pemasukan bulan ini untuk UserId: {UserId}", userId);
             insights.Add(new FinancialInsightResponse
             {
                 Type = "Info",
@@ -48,7 +52,6 @@ public class FinancialInsightService : IFinancialInsightService
         // ==========================================
         // 2. CEK EXPENSE BULAN INI
         // ==========================================
-
         var currentExpense =
             await _repository.GetCurrentMonthExpenseAsync(
                 userId,
@@ -57,6 +60,7 @@ public class FinancialInsightService : IFinancialInsightService
 
         if (currentExpense == 0)
         {
+            _logger.LogInformation("Insight: Belum ada pengeluaran bulan ini untuk UserId: {UserId}", userId);
             insights.Add(new FinancialInsightResponse
             {
                 Type = "Info",
@@ -69,7 +73,6 @@ public class FinancialInsightService : IFinancialInsightService
         // ==========================================
         // 3. BANDINGKAN DENGAN BULAN SEBELUMNYA
         // ==========================================
-
         var previousExpense =
             await _repository.GetPreviousMonthExpenseAsync(
                 userId,
@@ -83,6 +86,9 @@ public class FinancialInsightService : IFinancialInsightService
                 ((currentExpense - previousExpense)
                 / previousExpense) * 100;
 
+            _logger.LogWarning("Insight: Pengeluaran UserId {UserId} naik {Increase:F1}% dibandingkan bulan lalu",
+                userId, increase);
+
             insights.Add(new FinancialInsightResponse
             {
                 Type = "Warning",
@@ -95,7 +101,6 @@ public class FinancialInsightService : IFinancialInsightService
         // ==========================================
         // 4. CEK BUDGET
         // ==========================================
-
         var budgets =
             await _repository.GetActiveBudgetsAsync(userId);
 
@@ -118,6 +123,9 @@ public class FinancialInsightService : IFinancialInsightService
 
             if (percentage >= 100)
             {
+                _logger.LogWarning("Insight: Budget {CategoryName} terlampaui ({Percentage:F1}%) untuk UserId {UserId}",
+                    budget.Category.Name, percentage, userId);
+
                 insights.Add(new FinancialInsightResponse
                 {
                     Type = "Danger",
@@ -128,6 +136,9 @@ public class FinancialInsightService : IFinancialInsightService
             }
             else if (percentage >= 80)
             {
+                _logger.LogWarning("Insight: Budget {CategoryName} hampir habis ({Percentage:F1}%) untuk UserId {UserId}",
+                    budget.Category.Name, percentage, userId);
+
                 insights.Add(new FinancialInsightResponse
                 {
                     Type = "Warning",
@@ -141,7 +152,6 @@ public class FinancialInsightService : IFinancialInsightService
         // ==========================================
         // 5. KATEGORI PENGELUARAN TERBESAR
         // ==========================================
-
         var expenses =
             await _repository.GetCurrentMonthExpensesAsync(
                 userId,
@@ -165,6 +175,9 @@ public class FinancialInsightService : IFinancialInsightService
                 .OrderByDescending(item => item.TotalAmount)
                 .First();
 
+            _logger.LogInformation("Insight: Kategori pengeluaran terbesar UserId {UserId} adalah {Category} ({Amount})",
+                userId, highestCategory.CategoryName, highestCategory.TotalAmount);
+
             insights.Add(new FinancialInsightResponse
             {
                 Type = "Info",
@@ -177,10 +190,12 @@ public class FinancialInsightService : IFinancialInsightService
         // ==========================================
         // 6. EXPENSE LEBIH BESAR DARI INCOME
         // ==========================================
-
         if (currentExpense > currentIncome &&
             currentExpense > 0)
         {
+            _logger.LogWarning("Insight: Total pengeluaran ({Expense}) melebihi pemasukan ({Income}) untuk UserId {UserId}",
+                currentExpense, currentIncome, userId);
+
             insights.Add(new FinancialInsightResponse
             {
                 Type = "Danger",
@@ -189,6 +204,9 @@ public class FinancialInsightService : IFinancialInsightService
                     "Total pengeluaran bulan ini lebih besar daripada total pemasukan."
             });
         }
+
+        _logger.LogInformation("Selesai menghasilkan {Count} wawasan keuangan untuk UserId: {UserId}",
+            insights.Count, userId);
 
         return insights;
     }

@@ -45,6 +45,7 @@ public class DashboardRepository : IDashboardRepository
         int limit = 5)
     {
         return await _context.Transactions
+            .AsNoTracking()
             .Include(transaction => transaction.Wallet)
             .Include(transaction => transaction.Category)
             .Where(transaction => transaction.UserId == userId)
@@ -58,12 +59,16 @@ public class DashboardRepository : IDashboardRepository
        int month,
        int year)
     {
+        var startDate = new DateTime(year, month, 1);
+        var endDate = startDate.AddMonths(1);
+
         return await _context.Transactions
+            .AsNoTracking()
             .Where(transaction =>
                 transaction.UserId == userId &&
                 transaction.Type == "Income" &&
-                transaction.TransactionDate.Month == month &&
-                transaction.TransactionDate.Year == year)
+                transaction.TransactionDate >= startDate &&
+                transaction.TransactionDate < endDate)
             .SumAsync(transaction => transaction.Amount);
     }
 
@@ -91,12 +96,16 @@ public class DashboardRepository : IDashboardRepository
         int year,
         string type)
     {
+        var startDate = new DateTime(year, month, 1);
+        var endDate = startDate.AddMonths(1);
+
         return await _context.Transactions
+            .AsNoTracking()
             .Where(transaction =>
                 transaction.UserId == userId &&
                 transaction.Type == type &&
-                transaction.TransactionDate.Month == month &&
-                transaction.TransactionDate.Year == year)
+                transaction.TransactionDate >= startDate &&
+                transaction.TransactionDate < endDate)
             .GroupBy(transaction => new
             {
                 transaction.CategoryId,
@@ -122,38 +131,49 @@ public class DashboardRepository : IDashboardRepository
         int userId)
     {
         var wallets = await _context.Wallets
+            .AsNoTracking()
             .Where(wallet => wallet.UserId == userId)
             .ToListAsync();
 
-        var result = new List<WalletSummaryData>();
-
-        foreach (var wallet in wallets)
-        {
-            var totalIncome = await _context.Transactions
-                .Where(transaction =>
-                    transaction.UserId == userId &&
-                    transaction.WalletId == wallet.Id &&
-                    transaction.Type == "Income")
-                .SumAsync(transaction => transaction.Amount);
-
-            var totalExpense = await _context.Transactions
-                .Where(transaction =>
-                    transaction.UserId == userId &&
-                    transaction.WalletId == wallet.Id &&
-                    transaction.Type == "Expense")
-                .SumAsync(transaction => transaction.Amount);
-
-            result.Add(new WalletSummaryData
+        var transactionSummary = await _context.Transactions
+            .AsNoTracking()
+            .Where(transaction => transaction.UserId == userId)
+            .GroupBy(transaction => transaction.WalletId)
+            .Select(group => new
             {
-                WalletId = wallet.Id,
-                WalletName = wallet.Name,
-                Type = wallet.Type,
-                Balance = wallet.Balance,
-                TotalIncome = totalIncome,
-                TotalExpense = totalExpense,
-                NetBalance = totalIncome - totalExpense
-            });
-        }
+                WalletId = group.Key,
+
+                TotalIncome = group
+                    .Where(transaction => transaction.Type == "Income")
+                    .Sum(transaction => transaction.Amount),
+
+                TotalExpense = group
+                    .Where(transaction => transaction.Type == "Expense")
+                    .Sum(transaction => transaction.Amount)
+            })
+            .ToListAsync();
+
+        var result = wallets
+            .Select(wallet =>
+            {
+                var summary = transactionSummary
+                    .FirstOrDefault(x => x.WalletId == wallet.Id);
+
+                var totalIncome = summary?.TotalIncome ?? 0;
+                var totalExpense = summary?.TotalExpense ?? 0;
+
+                return new WalletSummaryData
+                {
+                    WalletId = wallet.Id,
+                    WalletName = wallet.Name,
+                    Type = wallet.Type,
+                    Balance = wallet.Balance,
+                    TotalIncome = totalIncome,
+                    TotalExpense = totalExpense,
+                    NetBalance = totalIncome - totalExpense
+                };
+            })
+            .ToList();
 
         return result;
     }

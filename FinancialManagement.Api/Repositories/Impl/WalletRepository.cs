@@ -17,6 +17,7 @@ public class WalletRepository : IWalletRepository
     public async Task<List<Wallet>> GetByUserIdAsync(int userId)
     {
         return await _context.Wallets
+            .AsNoTracking()
             .Where(wallet => wallet.UserId == userId)
             .OrderByDescending(wallet => wallet.CreatedAt)
             .ToListAsync();
@@ -25,6 +26,7 @@ public class WalletRepository : IWalletRepository
     public async Task<Wallet?> GetByIdAsync(int id, int userId)
     {
         return await _context.Wallets
+            .AsNoTracking()
             .FirstOrDefaultAsync(wallet =>
                 wallet.Id == id &&
                 wallet.UserId == userId);

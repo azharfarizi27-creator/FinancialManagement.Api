@@ -92,5 +92,7 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Budget>()
             .Property(x => x.LimitAmount)
             .HasPrecision(18, 2);
+
+
     }
 }

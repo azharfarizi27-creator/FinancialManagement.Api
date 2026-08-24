@@ -1,4 +1,3 @@
-﻿using System.Security.Claims;
 using FinancialManagement.Api.DTOs.Category;
 using FinancialManagement.Api.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -6,10 +5,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace FinancialManagement.Api.Controllers;
 
-[ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class CategoryController : ControllerBase
+public class CategoryController : BaseApiController
 {
     private readonly ICategoryService _categoryService;
 
@@ -108,13 +106,5 @@ public class CategoryController : ControllerBase
         {
             message = "Category berhasil dihapus."
         });
-    }
-
-    private int GetUserId()
-    {
-        var userId = User.FindFirstValue(
-            ClaimTypes.NameIdentifier);
-
-        return int.Parse(userId!);
     }
 }

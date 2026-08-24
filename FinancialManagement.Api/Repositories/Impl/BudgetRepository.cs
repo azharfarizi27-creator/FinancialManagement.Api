@@ -17,6 +17,7 @@ public class BudgetRepository : IBudgetRepository
     public async Task<List<Budget>> GetByUserIdAsync(int userId)
     {
         return await _context.Budgets
+            .AsNoTracking()
             .Include(budget => budget.Category)
             .Where(budget => budget.UserId == userId)
             .OrderByDescending(budget => budget.Year)
@@ -78,13 +79,17 @@ public class BudgetRepository : IBudgetRepository
         int month,
         int year)
     {
+        var startDate = new DateTime(year, month, 1);
+        var endDate = startDate.AddMonths(1);
+
         return await _context.Transactions
+            .AsNoTracking()
             .Where(transaction =>
                 transaction.UserId == userId &&
                 transaction.CategoryId == categoryId &&
                 transaction.Type == "Expense" &&
-                transaction.TransactionDate.Month == month &&
-                transaction.TransactionDate.Year == year)
+                transaction.TransactionDate >= startDate &&
+                transaction.TransactionDate < endDate)
             .SumAsync(transaction => transaction.Amount);
     }
 }

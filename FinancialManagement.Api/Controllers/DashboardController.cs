@@ -1,14 +1,12 @@
-﻿using System.Security.Claims;
 using FinancialManagement.Api.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FinancialManagement.Api.Controllers;
 
-[ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class DashboardController : ControllerBase
+public class DashboardController : BaseApiController
 {
     private readonly IDashboardService _dashboardService;
 
@@ -127,13 +125,5 @@ public class DashboardController : ControllerBase
                 userId);
 
         return Ok(result);
-    }
-
-    private int GetUserId()
-    {
-        var userId = User.FindFirstValue(
-            ClaimTypes.NameIdentifier);
-
-        return int.Parse(userId!);
     }
 }

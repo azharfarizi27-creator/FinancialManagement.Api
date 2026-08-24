@@ -1,5 +1,7 @@
-﻿using System.Net;
+using System.Net;
 using System.Text.Json;
+using FinancialManagement.Api.Exceptions;
+using FluentValidation;
 
 namespace FinancialManagement.Api.Middleware;
 
@@ -24,31 +26,66 @@ public class ExceptionHandlingMiddleware
         }
         catch (Exception exception)
         {
-            _logger.LogError(
-                exception,
-                "Terjadi error pada request.");
-
-            await HandleExceptionAsync(
-                context,
-                exception);
+            await HandleExceptionAsync(context, exception);
         }
     }
 
-    private static async Task HandleExceptionAsync(
+    private async Task HandleExceptionAsync(
         HttpContext context,
         Exception exception)
     {
+        var traceId = context.TraceIdentifier;
         context.Response.ContentType = "application/json";
-        context.Response.StatusCode =
-            (int)HttpStatusCode.InternalServerError;
+
+        int statusCode;
+        string message;
+        object? errors = null;
+
+        switch (exception)
+        {
+            case AppException appEx:
+                statusCode = appEx.StatusCode;
+                message = appEx.Message;
+                _logger.LogWarning("AppException [{StatusCode}] on {Path}: {Message} (TraceId: {TraceId})",
+                    appEx.StatusCode, context.Request.Path, appEx.Message, traceId);
+                break;
+
+            case ValidationException valEx:
+                statusCode = (int)HttpStatusCode.BadRequest;
+                message = "Validasi data gagal.";
+                errors = valEx.Errors.Select(e => new
+                {
+                    field = e.PropertyName,
+                    error = e.ErrorMessage
+                });
+                _logger.LogWarning("ValidationException on {Path}: {Errors} (TraceId: {TraceId})",
+                    context.Request.Path, JsonSerializer.Serialize(errors), traceId);
+                break;
+
+            default:
+                statusCode = (int)HttpStatusCode.InternalServerError;
+                message = "Terjadi kesalahan internal pada server.";
+                _logger.LogError(exception, "Unhandled error on {Path} (TraceId: {TraceId}): {Message}",
+                    context.Request.Path, traceId, exception.Message);
+                break;
+        }
+
+        context.Response.StatusCode = statusCode;
 
         var response = new
         {
-            statusCode = context.Response.StatusCode,
-            message = "Terjadi kesalahan pada server."
+            statusCode,
+            message,
+            errors,
+            traceId
         };
 
-        await context.Response.WriteAsync(
-            JsonSerializer.Serialize(response));
+        var jsonOptions = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+        };
+
+        await context.Response.WriteAsync(JsonSerializer.Serialize(response, jsonOptions));
     }
 }
