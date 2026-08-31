@@ -18,6 +18,9 @@ using QuestPDF.Infrastructure;
 // QuestPDF License Configuration (Community License)
 QuestPDF.Settings.License = LicenseType.Community;
 
+// Enable Npgsql legacy timestamp behavior for seamless DateTime compatibility
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
 var builder = WebApplication.CreateBuilder(args);
 
 // 1. Controllers & FluentValidation
@@ -80,11 +83,46 @@ builder.Services.AddSwaggerGen(options =>
         });
 });
 
-// 4. Database Context
+// 4. Database Context (Supports both PostgreSQL & SQL Server)
+var rawConnString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? Environment.GetEnvironmentVariable("DATABASE_URL")
+    ?? "";
+
+string formattedConnString = rawConnString;
+if (rawConnString.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase) ||
+    rawConnString.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase))
+{
+    try
+    {
+        var uri = new Uri(rawConnString);
+        var userInfo = uri.UserInfo.Split(':');
+        var username = userInfo.Length > 0 ? userInfo[0] : "";
+        var password = userInfo.Length > 1 ? userInfo[1] : "";
+        var host = uri.Host;
+        var port = uri.Port > 0 ? uri.Port : 5432;
+        var database = uri.AbsolutePath.TrimStart('/');
+
+        formattedConnString = $"Host={host};Port={port};Database={database};Username={username};Password={password};SSL Mode=Require;Trust Server Certificate=true;";
+    }
+    catch
+    {
+        formattedConnString = rawConnString;
+    }
+}
+
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(
-        builder.Configuration.GetConnectionString("DefaultConnection")
-    ));
+{
+    if (formattedConnString.Contains("Host=", StringComparison.OrdinalIgnoreCase) ||
+        formattedConnString.Contains("Port=", StringComparison.OrdinalIgnoreCase) ||
+        formattedConnString.Contains("Username=", StringComparison.OrdinalIgnoreCase))
+    {
+        options.UseNpgsql(formattedConnString);
+    }
+    else
+    {
+        options.UseSqlServer(formattedConnString);
+    }
+});
 
 // 5. Rate Limiting Policy for Auth & Sensitive Endpoints
 builder.Services.AddRateLimiter(options =>
@@ -163,19 +201,35 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
+// Auto-create database & tables on startup for PostgreSQL / Cloud DB
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    try
+    {
+        dbContext.Database.EnsureCreated();
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogError(ex, "Failed to execute Database.EnsureCreated()");
+    }
+}
+
 // ==========================================
 // PIPELINE & MIDDLEWARE (Urutan Sangat Krusial)
 // ==========================================
 
-if (app.Environment.IsDevelopment())
+// Enable Swagger in all environments for portfolio testing & live documentation
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-else
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "FinancialManagement API v1");
+    c.RoutePrefix = "swagger";
+});
+
+if (!app.Environment.IsDevelopment())
 {
     app.UseHsts();
-    app.UseHttpsRedirection(); // Hanya redirect HTTPS di Production
 }
 
 // 1. CORS ditaruh paling awal agar semua response (termasuk error) punya header CORS
