@@ -1,4 +1,4 @@
-﻿using FinancialManagement.Api.Models;
+using FinancialManagement.Api.Models;
 
 namespace FinancialManagement.Api.Repositories.Interfaces;
 
@@ -7,6 +7,8 @@ public interface IWalletRepository
     Task<List<Wallet>> GetByUserIdAsync(int userId);
 
     Task<Wallet?> GetByIdAsync(int id, int userId);
+
+    Task<Wallet?> GetTrackedByIdAsync(int id, int userId);
 
     Task<Wallet> CreateAsync(Wallet wallet);
 

@@ -1,4 +1,4 @@
-﻿namespace FinancialManagement.Api.Models;
+namespace FinancialManagement.Api.Models;
 
 public class Transaction
 {
@@ -15,6 +15,8 @@ public class Transaction
     public string Type { get; set; } = string.Empty;
 
     public string? Description { get; set; }
+
+    public string? ReceiptUrl { get; set; }
 
     public DateTime TransactionDate { get; set; }
 

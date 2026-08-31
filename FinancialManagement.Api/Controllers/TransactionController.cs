@@ -10,11 +10,14 @@ namespace FinancialManagement.Api.Controllers;
 public class TransactionController : BaseApiController
 {
     private readonly ITransactionService _transactionService;
+    private readonly IExportService _exportService;
 
     public TransactionController(
-        ITransactionService transactionService)
+        ITransactionService transactionService,
+        IExportService exportService)
     {
         _transactionService = transactionService;
+        _exportService = exportService;
     }
 
     [HttpGet]
@@ -143,6 +146,66 @@ public class TransactionController : BaseApiController
         }
 
         return Ok(transaction);
+    }
+
+    [HttpPost("{id}/receipt")]
+    [Consumes("multipart/form-data")]
+    public async Task<IActionResult> UploadReceipt(int id, IFormFile file)
+    {
+        var userId = GetUserId();
+        var updated = await _transactionService.UploadReceiptAsync(id, userId, file);
+
+        if (updated == null)
+        {
+            return NotFound(new
+            {
+                message = "Transaction tidak ditemukan atau bukan milik user."
+            });
+        }
+
+        return Ok(new
+        {
+            success = true,
+            message = "Nota transaksi berhasil diunggah.",
+            receiptUrl = updated.ReceiptUrl,
+            transaction = updated
+        });
+    }
+
+    [HttpGet("export")]
+    public async Task<IActionResult> Export(
+        [FromQuery] string format = "csv",
+        [FromQuery] string? type = null,
+        [FromQuery] int? categoryId = null,
+        [FromQuery] int? walletId = null,
+        [FromQuery] DateTime? startDate = null,
+        [FromQuery] DateTime? endDate = null)
+    {
+        var userId = GetUserId();
+        var normalizedFormat = format.Trim().ToLowerInvariant();
+
+        var timestamp = DateTime.UtcNow.ToString("yyyyMMdd_HHmmss");
+
+        if (normalizedFormat == "csv")
+        {
+            var bytes = await _exportService.ExportTransactionsCsvAsync(userId, startDate, endDate, type, categoryId, walletId);
+            return File(bytes, "text/csv", $"transactions_{timestamp}.csv");
+        }
+        else if (normalizedFormat == "xlsx" || normalizedFormat == "excel")
+        {
+            var bytes = await _exportService.ExportTransactionsExcelAsync(userId, startDate, endDate, type, categoryId, walletId);
+            return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"transactions_{timestamp}.xlsx");
+        }
+        else if (normalizedFormat == "pdf")
+        {
+            var bytes = await _exportService.ExportTransactionsPdfAsync(userId, startDate, endDate, type, categoryId, walletId);
+            return File(bytes, "application/pdf", $"transactions_{timestamp}.pdf");
+        }
+
+        return BadRequest(new
+        {
+            message = "Format export tidak didukung. Pilihan yang tersedia: csv, xlsx, pdf."
+        });
     }
 
     [HttpDelete("{id}")]

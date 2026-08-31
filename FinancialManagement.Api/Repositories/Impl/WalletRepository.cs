@@ -1,4 +1,4 @@
-﻿using FinancialManagement.Api.Data;
+using FinancialManagement.Api.Data;
 using FinancialManagement.Api.Models;
 using FinancialManagement.Api.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -31,6 +31,15 @@ public class WalletRepository : IWalletRepository
                 wallet.Id == id &&
                 wallet.UserId == userId);
     }
+
+    public async Task<Wallet?> GetTrackedByIdAsync(int id, int userId)
+    {
+        return await _context.Wallets
+            .FirstOrDefaultAsync(wallet =>
+                wallet.Id == id &&
+                wallet.UserId == userId);
+    }
+
 
     public async Task<Wallet> CreateAsync(Wallet wallet)
     {

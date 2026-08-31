@@ -1,4 +1,4 @@
-﻿using FinancialManagement.Api.DTOs.Wallet;
+using FinancialManagement.Api.DTOs.Wallet;
 
 namespace FinancialManagement.Api.Services.Interfaces;
 
@@ -18,4 +18,8 @@ public interface IWalletService
         int userId);
 
     Task<bool> DeleteAsync(int id, int userId);
+
+    Task<TransferResponse> TransferAsync(
+        TransferWalletRequest request,
+        int userId);
 }

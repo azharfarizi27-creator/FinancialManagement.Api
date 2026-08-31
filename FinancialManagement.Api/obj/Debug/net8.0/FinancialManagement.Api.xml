@@ -4,6 +4,61 @@
         <name>FinancialManagement.Api</name>
     </assembly>
     <members>
+        <member name="M:FinancialManagement.Api.Controllers.AuthController.SendRegisterOtp(FinancialManagement.Api.DTOs.Auth.SendOtpRequest)">
+            <summary>
+            Mengirim kode OTP verifikasi pendaftaran ke email calon pengguna.
+            </summary>
+        </member>
+        <member name="M:FinancialManagement.Api.Controllers.AuthController.VerifyRegisterOtp(FinancialManagement.Api.DTOs.Auth.VerifyRegisterOtpRequest)">
+            <summary>
+            Memverifikasi kode OTP dan menyelesaikan proses pendaftaran akun baru.
+            </summary>
+        </member>
+        <member name="M:FinancialManagement.Api.Controllers.AuthController.Register(FinancialManagement.Api.DTOs.Auth.RegisterRequest)">
+            <summary>
+            Pendaftaran akun langsung (Direct Registration).
+            </summary>
+        </member>
+        <member name="M:FinancialManagement.Api.Controllers.AuthController.Login(FinancialManagement.Api.DTOs.Auth.LoginRequest)">
+            <summary>
+            Masuk (Login) ke dalam sistem dengan email dan kata sandi.
+            </summary>
+        </member>
+        <member name="M:FinancialManagement.Api.Controllers.AuthController.ForgotPassword(FinancialManagement.Api.DTOs.Auth.ForgotPasswordRequest)">
+            <summary>
+            Mengirim kode OTP reset kata sandi ke email pengguna.
+            </summary>
+        </member>
+        <member name="M:FinancialManagement.Api.Controllers.AuthController.ResetPassword(FinancialManagement.Api.DTOs.Auth.ResetPasswordRequest)">
+            <summary>
+            Menyetel ulang kata sandi dengan kode OTP yang dikirim ke email.
+            </summary>
+        </member>
+        <member name="M:FinancialManagement.Api.Controllers.AuthController.SendChangePasswordOtp">
+            <summary>
+            Mengirim kode OTP ke email pengguna yang sedang login untuk konfirmasi pergantian kata sandi.
+            </summary>
+        </member>
+        <member name="M:FinancialManagement.Api.Controllers.AuthController.ChangePassword(FinancialManagement.Api.DTOs.User.ChangePasswordRequest)">
+            <summary>
+            Mengubah kata sandi pengguna yang sedang login (dengan verifikasi OTP jika disertakan).
+            </summary>
+        </member>
+        <member name="M:FinancialManagement.Api.Controllers.AuthController.CleanupExpiredOtpDelete">
+            <summary>
+            Membersihkan (cleanup) kode OTP yang kedaluwarsa atau sudah terpakai dari database agar database tetap ringan.
+            </summary>
+        </member>
+        <member name="M:FinancialManagement.Api.Controllers.AuthController.CleanupExpiredOtpPost">
+            <summary>
+            Endpoint alternatif (POST) untuk membersihkan record sampah kode OTP di database.
+            </summary>
+        </member>
+        <member name="M:FinancialManagement.Api.Controllers.AuthController.Me">
+            <summary>
+            Mendapatkan data identitas pengguna yang sedang login dari JWT token.
+            </summary>
+        </member>
         <member name="T:FinancialManagement.Api.Migrations.InitialCreate">
             <inheritdoc />
         </member>
@@ -14,6 +69,54 @@
             <inheritdoc />
         </member>
         <member name="M:FinancialManagement.Api.Migrations.InitialCreate.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:FinancialManagement.Api.Migrations.AddSavingsGoalsAndRecurringBillsAndUserProfile">
+            <inheritdoc />
+        </member>
+        <member name="M:FinancialManagement.Api.Migrations.AddSavingsGoalsAndRecurringBillsAndUserProfile.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:FinancialManagement.Api.Migrations.AddSavingsGoalsAndRecurringBillsAndUserProfile.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:FinancialManagement.Api.Migrations.AddSavingsGoalsAndRecurringBillsAndUserProfile.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:FinancialManagement.Api.Migrations.AddUserPreferencesAndNotifications">
+            <inheritdoc />
+        </member>
+        <member name="M:FinancialManagement.Api.Migrations.AddUserPreferencesAndNotifications.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:FinancialManagement.Api.Migrations.AddUserPreferencesAndNotifications.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:FinancialManagement.Api.Migrations.AddUserPreferencesAndNotifications.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:FinancialManagement.Api.Migrations.AddPasswordResetTokens">
+            <inheritdoc />
+        </member>
+        <member name="M:FinancialManagement.Api.Migrations.AddPasswordResetTokens.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:FinancialManagement.Api.Migrations.AddPasswordResetTokens.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:FinancialManagement.Api.Migrations.AddPasswordResetTokens.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:FinancialManagement.Api.Migrations.AddOtpTokens">
+            <inheritdoc />
+        </member>
+        <member name="M:FinancialManagement.Api.Migrations.AddOtpTokens.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:FinancialManagement.Api.Migrations.AddOtpTokens.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:FinancialManagement.Api.Migrations.AddOtpTokens.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
             <inheritdoc />
         </member>
     </members>

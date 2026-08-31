@@ -58,6 +58,10 @@
               "target": "Package",
               "version": "[4.2.0, )"
             },
+            "ClosedXML": {
+              "target": "Package",
+              "version": "[0.105.1, )"
+            },
             "FluentValidation.AspNetCore": {
               "target": "Package",
               "version": "[11.3.0, )"
@@ -79,6 +83,10 @@
               "suppressParent": "All",
               "target": "Package",
               "version": "[8.0.19, )"
+            },
+            "QuestPDF": {
+              "target": "Package",
+              "version": "[2026.8.0, )"
             },
             "Swashbuckle.AspNetCore": {
               "target": "Package",

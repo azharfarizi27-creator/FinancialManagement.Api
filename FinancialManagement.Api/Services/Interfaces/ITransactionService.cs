@@ -1,4 +1,4 @@
-﻿using FinancialManagement.Api.DTOs.Transaction;
+using FinancialManagement.Api.DTOs.Transaction;
 using FinancialManagement.Api.DTOs.Common;
 
 namespace FinancialManagement.Api.Services.Interfaces;
@@ -14,6 +14,7 @@ public interface ITransactionService
         int? walletId = null,
         DateTime? startDate = null,
         DateTime? endDate = null);
+
     Task<TransactionResponse?> GetByIdAsync(
         int id,
         int userId);
@@ -26,6 +27,11 @@ public interface ITransactionService
         int id,
         UpdateTransactionRequest request,
         int userId);
+
+    Task<TransactionResponse?> UploadReceiptAsync(
+        int id,
+        int userId,
+        IFormFile file);
 
     Task<bool> DeleteAsync(
         int id,

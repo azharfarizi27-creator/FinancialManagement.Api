@@ -1,4 +1,4 @@
-﻿namespace FinancialManagement.Api.DTOs.Transaction;
+namespace FinancialManagement.Api.DTOs.Transaction;
 
 public class TransactionResponse
 {
@@ -13,6 +13,8 @@ public class TransactionResponse
     public string Type { get; set; } = string.Empty;
 
     public string? Description { get; set; }
+
+    public string? ReceiptUrl { get; set; }
 
     public DateTime TransactionDate { get; set; }
 

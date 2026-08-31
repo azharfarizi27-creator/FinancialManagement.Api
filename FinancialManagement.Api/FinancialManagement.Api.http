@@ -1,6 +1,220 @@
-@FinancialManagement.Api_HostAddress = http://localhost:5111
+@HostAddress = http://localhost:5111
+@Token = YOUR_JWT_TOKEN_HERE
 
-GET {{FinancialManagement.Api_HostAddress}}/weatherforecast/
-Accept: application/json
+### 1. Register User (Langsung)
+POST {{HostAddress}}/api/Auth/register
+Content-Type: application/json
 
-###
+{
+  "fullName": "Budi Santoso",
+  "email": "budi@example.com",
+  "password": "Password123!"
+}
+
+### 1a. Kirim OTP Register ke Email
+POST {{HostAddress}}/api/Auth/register/send-otp
+Content-Type: application/json
+
+{
+  "email": "budi@example.com"
+}
+
+### 1b. Verifikasi OTP & Selesaikan Register
+POST {{HostAddress}}/api/Auth/register/verify-otp
+Content-Type: application/json
+
+{
+  "fullName": "Budi Santoso",
+  "email": "budi@example.com",
+  "password": "Password123!",
+  "otpCode": "123456"
+}
+
+### 1c. Kirim OTP Lupa Password ke Email
+POST {{HostAddress}}/api/Auth/forgot-password
+Content-Type: application/json
+
+{
+  "email": "budi@example.com"
+}
+
+### 1d. Reset Password dengan OTP
+POST {{HostAddress}}/api/Auth/reset-password
+Content-Type: application/json
+
+{
+  "email": "budi@example.com",
+  "otpCode": "123456",
+  "newPassword": "NewSecurePassword2026!",
+  "confirmPassword": "NewSecurePassword2026!"
+}
+
+### 1e. Kirim OTP Ganti Password (User Login)
+POST {{HostAddress}}/api/Auth/change-password/send-otp
+Authorization: Bearer {{Token}}
+
+### 1f. Bersihkan Sampah/Cache OTP dari Database
+DELETE {{HostAddress}}/api/Auth/otp/cleanup
+
+### 2. Login User
+POST {{HostAddress}}/api/Auth/login
+Content-Type: application/json
+
+{
+  "email": "budi@example.com",
+  "password": "Password123!"
+}
+
+### 3. Get User Profile (Auth/me)
+GET {{HostAddress}}/api/Auth/me
+Authorization: Bearer {{Token}}
+
+### 4. Get User Profile (User/profile)
+GET {{HostAddress}}/api/User/profile
+Authorization: Bearer {{Token}}
+
+### 5. Update User Profile
+PUT {{HostAddress}}/api/User/profile
+Authorization: Bearer {{Token}}
+Content-Type: application/json
+
+{
+  "fullName": "Budi Santoso, S.Kom",
+  "phoneNumber": "081234567890",
+  "bio": "Mengatur keuangan keluarga lebih bijak.",
+  "avatarColor": "from-emerald-500 to-teal-600",
+  "avatarIcon": "wallet"
+}
+
+### 6. Change Password
+POST {{HostAddress}}/api/Auth/change-password
+Authorization: Bearer {{Token}}
+Content-Type: application/json
+
+{
+  "currentPassword": "Password123!",
+  "newPassword": "NewSecurePassword2026!"
+}
+
+### 7. Get Account Stats
+GET {{HostAddress}}/api/User/stats
+Authorization: Bearer {{Token}}
+
+### ---------------- WALLET & TRANSFER ----------------
+
+### 8. Get All Wallets
+GET {{HostAddress}}/api/Wallet
+Authorization: Bearer {{Token}}
+
+### 9. Create Wallet
+POST {{HostAddress}}/api/Wallet
+Authorization: Bearer {{Token}}
+Content-Type: application/json
+
+{
+  "name": "BCA Utama",
+  "type": "Bank",
+  "balance": 5000000
+}
+
+### 10. Transfer Saldo Antar Dompet
+POST {{HostAddress}}/api/Wallet/transfer
+Authorization: Bearer {{Token}}
+Content-Type: application/json
+
+{
+  "fromWalletId": 1,
+  "toWalletId": 2,
+  "amount": 250000,
+  "adminFee": 2500,
+  "date": "2026-08-25T10:00:00Z",
+  "notes": "Transfer uang jajan"
+}
+
+### ---------------- SAVINGS GOALS ----------------
+
+### 11. Get All Savings Goals
+GET {{HostAddress}}/api/Goals
+Authorization: Bearer {{Token}}
+
+### 12. Create Savings Goal
+POST {{HostAddress}}/api/Goals
+Authorization: Bearer {{Token}}
+Content-Type: application/json
+
+{
+  "title": "Beli Laptop M3 Pro",
+  "targetAmount": 28000000,
+  "currentAmount": 2000000,
+  "targetDate": "2026-12-31T00:00:00Z",
+  "category": "Elektronik",
+  "color": "blue",
+  "icon": "laptop",
+  "description": "Tabungan untuk upgrade laptop kerja utama"
+}
+
+### 13. Deposit to Savings Goal
+POST {{HostAddress}}/api/Goals/1/deposit
+Authorization: Bearer {{Token}}
+Content-Type: application/json
+
+{
+  "amount": 1000000,
+  "walletId": 1,
+  "note": "Setoran gaji bulan ini",
+  "date": "2026-08-25T12:00:00Z"
+}
+
+### 14. Delete Savings Goal
+DELETE {{HostAddress}}/api/Goals/1
+Authorization: Bearer {{Token}}
+
+### ---------------- RECURRING BILLS ----------------
+
+### 15. Get All Recurring Bills
+GET {{HostAddress}}/api/Bills
+Authorization: Bearer {{Token}}
+
+### 16. Create Recurring Bill
+POST {{HostAddress}}/api/Bills
+Authorization: Bearer {{Token}}
+Content-Type: application/json
+
+{
+  "title": "Netflix Premium",
+  "amount": 186000,
+  "dueDate": "2026-09-01T00:00:00Z",
+  "frequency": "monthly",
+  "reminderDays": 3,
+  "notes": "Langganan streaming bulanan"
+}
+
+### 17. Pay Recurring Bill
+POST {{HostAddress}}/api/Bills/1/pay
+Authorization: Bearer {{Token}}
+Content-Type: application/json
+
+{
+  "walletId": 1,
+  "amount": 186000,
+  "paymentDate": "2026-08-25T12:00:00Z",
+  "note": "Pembayaran Netflix via BCA"
+}
+
+### 18. Toggle Recurring Bill Status
+PATCH {{HostAddress}}/api/Bills/1/toggle-status
+Authorization: Bearer {{Token}}
+
+### ---------------- REPORTS & ANALYTICS ----------------
+
+### 19. Get Report Summary
+GET {{HostAddress}}/api/Reports/summary?startDate=2026-08-01T00:00:00Z&endDate=2026-08-31T23:59:59Z
+Authorization: Bearer {{Token}}
+
+### 20. Get Cashflow Trend
+GET {{HostAddress}}/api/Reports/cashflow?period=monthly&year=2026
+Authorization: Bearer {{Token}}
+
+### 21. Get Category Breakdown
+GET {{HostAddress}}/api/Reports/category-breakdown?type=Expense&startDate=2026-08-01T00:00:00Z&endDate=2026-08-31T23:59:59Z
+Authorization: Bearer {{Token}}

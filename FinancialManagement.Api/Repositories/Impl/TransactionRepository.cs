@@ -1,4 +1,4 @@
-﻿using FinancialManagement.Api.Data;
+using FinancialManagement.Api.Data;
 using FinancialManagement.Api.Models;
 using FinancialManagement.Api.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;

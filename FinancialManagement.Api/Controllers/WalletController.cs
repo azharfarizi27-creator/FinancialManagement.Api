@@ -107,4 +107,17 @@ public class WalletController : BaseApiController
             message = "Wallet berhasil dihapus."
         });
     }
+
+    [HttpPost("transfer")]
+    public async Task<IActionResult> Transfer(
+        TransferWalletRequest request)
+    {
+        var userId = GetUserId();
+
+        var result = await _walletService.TransferAsync(
+            request,
+            userId);
+
+        return Ok(result);
+    }
 }

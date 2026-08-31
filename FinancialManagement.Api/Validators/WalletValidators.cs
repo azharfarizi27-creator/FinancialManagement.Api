@@ -36,3 +36,23 @@ public class UpdateWalletRequestValidator : AbstractValidator<UpdateWalletReques
             .GreaterThanOrEqualTo(0).WithMessage("Saldo tidak boleh negatif.");
     }
 }
+
+public class TransferWalletRequestValidator : AbstractValidator<TransferWalletRequest>
+{
+    public TransferWalletRequestValidator()
+    {
+        RuleFor(x => x.FromWalletId)
+            .GreaterThan(0).WithMessage("Dompet asal wajib dipilih.");
+
+        RuleFor(x => x.ToWalletId)
+            .GreaterThan(0).WithMessage("Dompet tujuan wajib dipilih.")
+            .NotEqual(x => x.FromWalletId).WithMessage("Dompet asal dan tujuan tidak boleh sama.");
+
+        RuleFor(x => x.Amount)
+            .GreaterThan(0).WithMessage("Nominal transfer harus lebih besar dari 0.");
+
+        RuleFor(x => x.AdminFee)
+            .GreaterThanOrEqualTo(0).WithMessage("Biaya admin tidak boleh negatif.");
+    }
+}
+

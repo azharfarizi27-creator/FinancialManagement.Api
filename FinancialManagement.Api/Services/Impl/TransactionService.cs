@@ -1,6 +1,7 @@
 using FinancialManagement.Api.Data;
 using FinancialManagement.Api.DTOs.Common;
 using FinancialManagement.Api.DTOs.Transaction;
+using FinancialManagement.Api.Exceptions;
 using FinancialManagement.Api.Models;
 using FinancialManagement.Api.Repositories.Interfaces;
 using FinancialManagement.Api.Services.Interfaces;
@@ -12,6 +13,7 @@ public class TransactionService : ITransactionService
     private readonly ITransactionRepository _transactionRepository;
     private readonly IWalletRepository _walletRepository;
     private readonly ICategoryRepository _categoryRepository;
+    private readonly IFileStorageService _fileStorageService;
     private readonly AppDbContext _context;
     private readonly ILogger<TransactionService> _logger;
 
@@ -19,12 +21,14 @@ public class TransactionService : ITransactionService
         ITransactionRepository transactionRepository,
         IWalletRepository walletRepository,
         ICategoryRepository categoryRepository,
+        IFileStorageService fileStorageService,
         AppDbContext context,
         ILogger<TransactionService> logger)
     {
         _transactionRepository = transactionRepository;
         _walletRepository = walletRepository;
         _categoryRepository = categoryRepository;
+        _fileStorageService = fileStorageService;
         _context = context;
         _logger = logger;
     }
@@ -144,6 +148,14 @@ public class TransactionService : ITransactionService
             return null;
         }
 
+        // Validasi saldo tidak mencukupi untuk pengeluaran (mencegah saldo minus)
+        if (request.Type == "Expense" && wallet.Balance < request.Amount)
+        {
+            _logger.LogWarning("Gagal membuat transaksi: Saldo dompet {WalletId} ({Balance}) tidak mencukupi untuk nominal {Amount}",
+                wallet.Id, wallet.Balance, request.Amount);
+            throw new BadRequestException($"Saldo dompet '{wallet.Name}' (Rp {wallet.Balance:N0}) tidak mencukupi untuk melakukan transaksi pengeluaran sebesar Rp {request.Amount:N0}.");
+        }
+
         // Jalankan mutasi dan insert transaksi dalam Database Transaction Atomic
         using var dbTransaction = await _context.Database.BeginTransactionAsync();
         try
@@ -245,6 +257,39 @@ public class TransactionService : ITransactionService
             return null;
         }
 
+        // Validasi saldo pasca perubahan transaksi agar saldo tidak minus
+        if (oldWallet.Id == newWallet.Id)
+        {
+            var projectedBalance = oldWallet.Balance
+                + (transaction.Type == "Income" ? -transaction.Amount : transaction.Amount)
+                + (request.Type == "Income" ? request.Amount : -request.Amount);
+
+            if (projectedBalance < 0)
+            {
+                _logger.LogWarning("Gagal memperbarui transaksi: Perubahan menghasilkan saldo negatif ({Balance}) untuk dompet {WalletId}",
+                    projectedBalance, oldWallet.Id);
+                throw new BadRequestException($"Perubahan transaksi menyebabkan saldo dompet '{oldWallet.Name}' menjadi tidak mencukupi (negatif: Rp {projectedBalance:N0}).");
+            }
+        }
+        else
+        {
+            var projectedOldBalance = oldWallet.Balance + (transaction.Type == "Income" ? -transaction.Amount : transaction.Amount);
+            if (projectedOldBalance < 0)
+            {
+                _logger.LogWarning("Gagal memperbarui transaksi: Pembatalan transaksi lama menghasilkan saldo negatif ({Balance}) untuk dompet {WalletId}",
+                    projectedOldBalance, oldWallet.Id);
+                throw new BadRequestException($"Pembatalan transaksi lama menyebabkan saldo dompet '{oldWallet.Name}' menjadi negatif (Rp {projectedOldBalance:N0}).");
+            }
+
+            var projectedNewBalance = newWallet.Balance + (request.Type == "Income" ? request.Amount : -request.Amount);
+            if (projectedNewBalance < 0)
+            {
+                _logger.LogWarning("Gagal memperbarui transaksi: Transaksi baru menghasilkan saldo negatif ({Balance}) untuk dompet {WalletId}",
+                    projectedNewBalance, newWallet.Id);
+                throw new BadRequestException($"Saldo dompet '{newWallet.Name}' (Rp {newWallet.Balance:N0}) tidak mencukupi untuk nominal pengeluaran Rp {request.Amount:N0}.");
+            }
+        }
+
         using var dbTransaction = await _context.Database.BeginTransactionAsync();
         try
         {
@@ -311,6 +356,36 @@ public class TransactionService : ITransactionService
         }
     }
 
+    public async Task<TransactionResponse?> UploadReceiptAsync(
+        int id,
+        int userId,
+        IFormFile file)
+    {
+        _logger.LogInformation("Mengunggah nota untuk transaksi Id {TransactionId}, UserId: {UserId}", id, userId);
+
+        var transaction = await _transactionRepository.GetByIdAsync(id, userId);
+        if (transaction == null)
+        {
+            _logger.LogWarning("Transaksi Id {TransactionId} tidak ditemukan untuk UserId: {UserId}", id, userId);
+            return null;
+        }
+
+        // Delete old receipt if exists
+        if (!string.IsNullOrWhiteSpace(transaction.ReceiptUrl))
+        {
+            _fileStorageService.DeleteFile(transaction.ReceiptUrl);
+        }
+
+        var newReceiptUrl = await _fileStorageService.SaveFileAsync(file, "receipts");
+        transaction.ReceiptUrl = newReceiptUrl;
+
+        await _transactionRepository.UpdateAsync(transaction);
+
+        _logger.LogInformation("Nota transaksi berhasil diunggah untuk Id {TransactionId}: {ReceiptUrl}", id, newReceiptUrl);
+
+        return MapToResponse(transaction);
+    }
+
     public async Task<bool> DeleteAsync(
         int id,
         int userId)
@@ -334,6 +409,20 @@ public class TransactionService : ITransactionService
         {
             _logger.LogWarning("Gagal menghapus: Dompet terkait Id {WalletId} tidak ditemukan", transaction.WalletId);
             return false;
+        }
+
+        // Jika transaksi adalah Income, penghapusan akan mengurangi saldo dompet
+        if (transaction.Type == "Income" && wallet.Balance < transaction.Amount)
+        {
+            _logger.LogWarning("Gagal menghapus transaksi income: Saldo dompet {WalletId} ({Balance}) lebih kecil dari nominal {Amount}",
+                wallet.Id, wallet.Balance, transaction.Amount);
+            throw new BadRequestException($"Tidak dapat menghapus transaksi pemasukan ini karena saldo dompet '{wallet.Name}' saat ini (Rp {wallet.Balance:N0}) lebih kecil dari nominal pemasukan yang akan ditarik (Rp {transaction.Amount:N0}).");
+        }
+
+        // Delete receipt file if any
+        if (!string.IsNullOrWhiteSpace(transaction.ReceiptUrl))
+        {
+            _fileStorageService.DeleteFile(transaction.ReceiptUrl);
         }
 
         using var dbTransaction = await _context.Database.BeginTransactionAsync();
@@ -378,6 +467,7 @@ public class TransactionService : ITransactionService
             Amount = transaction.Amount,
             Type = transaction.Type,
             Description = transaction.Description,
+            ReceiptUrl = transaction.ReceiptUrl,
             TransactionDate = transaction.TransactionDate,
             CreatedAt = transaction.CreatedAt
         };
